@@ -35,15 +35,17 @@ import java.util.Random;
 public class GameView extends View {
 	
 	private Random rand = new Random();
+	
 	private float width;
 	private float height;
+	
 	float shieldRadius;
 	
 	private Projectile[] projectileArray = new Projectile[10];
 			// no more than 10 projectiles at a given time
 	
 	
-	// the next lines are for testing
+
 	
 	public static GameActivity gameActivity;
 	//public int backgroundblack = getResources().getColor(R.color.black);
@@ -56,7 +58,7 @@ public class GameView extends View {
 	//private Drawable shield; // these are for images
 	
 	private float projectileRadius;
-	private int projectileSpeed = 5;
+	private int projectileSpeed = 150;
 	//Projectile shieldProtector = new Projectile(width/2, height/2, 0.0, 0.0, (int)shieldRadius);
 	double[] shieldCoordinates = new double[2];
 	private boolean drawShield; // whether or not to draw the shield based on whether the finger is
@@ -76,6 +78,13 @@ public class GameView extends View {
 		@Override
 		public void run() {
 			updateProjectilePositions();
+			for(int i = 0; i<projectileArray.length;i++) {
+				if(projectileArray[i] != null) {
+					projectileArray[i].translate(); // updated position of all projectiles
+					
+				}
+			}
+			start();
 		}
 	};
 	
@@ -156,8 +165,8 @@ public class GameView extends View {
 		Paint background = new Paint();
 		background.setColor(backgroundcolor);
 		canvas.drawRect(0, 0, getWidth(), getHeight(), background);
-		castle.setBounds(left, top, right, bottom);
-		castle.draw(canvas);
+		//castle.setBounds(left, top, right, bottom);
+		//castle.draw(canvas);
 		// for now, try testing w/o drawing projectieles
 		// below here, draw all projectiles
 		for(int i = 0; i<projectileArray.length;i++) {
