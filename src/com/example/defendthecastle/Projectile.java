@@ -1,10 +1,10 @@
 package com.example.defendthecastle;
-import java.util.Random;
+//import java.util.Random;
 
 public class Projectile {
 	
 	public float x;
-	private static Random rand = new Random();
+	//private static Random rand = new Random();
 	public float y;
 	public double speedX;
 	public double speedY;
@@ -24,9 +24,10 @@ public class Projectile {
 	}
 	
 	public boolean contact(Projectile projectile) {
-		float difX = this.x - projectile.x;
-		float difY = this.y - projectile.y;
+		double difX = this.x - projectile.x;
+		double difY = this.y - projectile.y;
 		double distance = (Math.pow(difX, 2)+Math.pow(difY, 2)); // calculate distance between centres
+		distance = Math.pow(distance, .5);
 		return (distance < this.radius + projectile.radius); // determine is this distance is less than radii sum
 		// if true, projectiles are in contact
 		

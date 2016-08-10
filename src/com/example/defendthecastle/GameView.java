@@ -1,6 +1,7 @@
 package com.example.defendthecastle;
 import com.example.defendthecastle.R;
 
+
 //import android.R;
 import android.content.Context;
 import android.graphics.Paint;
@@ -44,6 +45,7 @@ public class GameView extends View {
 	private Projectile[] projectileArray = new Projectile[10];
 			// no more than 10 projectiles at a given time
 	
+	// create textview for score
 	
 
 	
@@ -60,7 +62,12 @@ public class GameView extends View {
 	private float projectileRadius;
 	private int projectileSpeed = 150;
 	//Projectile shieldProtector = new Projectile(width/2, height/2, 0.0, 0.0, (int)shieldRadius);
-	double[] shieldCoordinates = new double[2];
+	
+	//double[] shieldCoordinates = new double[2];
+	Projectile myShield = new Projectile(0,0,0,0,shieldRadius);
+	
+	Projectile target;
+	
 	private boolean drawShield; // whether or not to draw the shield based on whether the finger is
 	// touching the screen
 	
@@ -68,8 +75,11 @@ public class GameView extends View {
 	// left, right, top, and bottom are for drawing castle in centre
 	int numOfProjectiles = 1; // increase this (up to 10) every 10 seconds
 	long tStart = System.currentTimeMillis(); // start teh clock
+	
 	long tElapsed;
 	int numEntries;
+	
+	int score;
 	
 	private boolean started = false;
 	private Handler handler = new Handler();
@@ -78,19 +88,41 @@ public class GameView extends View {
 		@Override
 		public void run() {
 			updateProjectilePositions();
-			for(int i = 0; i<projectileArray.length;i++) {
-				if(projectileArray[i] != null) {
-					projectileArray[i].translate(); // updated position of all projectiles
-					
+			checkAllForContact();
+			for(int i = 0; i<10; i++) {
+				if(projectileArray[i]!= null && targetHit(projectileArray[i])) {
+					projectileArray[i] = null;
 				}
 			}
 			start();
 		}
 	};
+	/**
+	 * this method checks if any of hte projectiles are in contact with the shield
+	 * it also makes sure that the shield is drawn, so that projectiles aren't destroyed
+	 * while the shield isn't on the screen b/c it still has coordinates
+	 */
+	public void checkAllForContact() {
+		for(int i = 0; i<10; i++) {
+			if (projectileArray[i]!=null) {
+				if( drawShield && myShield.contact(projectileArray[i])) {
+					projectileArray[i] = null;
+					score++;
+				}
+			}
+		}
+	}
 	
+	public boolean targetHit(Projectile projectile) {
+		return target.contact(projectile);
+	}
+	
+	/** 
+	 * run movement thread
+	 */
 	public void start()  {
 		started = true;
-		handler.postDelayed(runnable, 50);
+		handler.postDelayed(runnable, 100);
 	}
 	
 	
@@ -123,9 +155,10 @@ public class GameView extends View {
 		super.onWindowFocusChanged(hasFocus);
 		width = getWidth();
 		height = getHeight();
+		target = new Projectile(width/2, height/2, 0, 0, 50); // create target in centre of screen
 		shieldRadius = (float)Math.pow(height*width/200,0.5);
 		projectileRadius = (float)Math.pow(height*width/300,0.5); // area is ~1/100 of screen
-		projectileArray = firstEntry();
+		//projectileArray = firstEntry();
 		projectileSpeed = 20;
 		left = (int)(height/2 - width/5);
 		right = (int)(width/2 + width/5);
@@ -152,7 +185,7 @@ public class GameView extends View {
 		;
 		initalizeCanvas(canvas);
 		if(drawShield) {
-			drawShield(shieldCoordinates[0],shieldCoordinates[1],canvas);
+			drawShield(myShield.x,myShield.y,canvas);
 		}
 	}
 	
@@ -165,8 +198,16 @@ public class GameView extends View {
 		Paint background = new Paint();
 		background.setColor(backgroundcolor);
 		canvas.drawRect(0, 0, getWidth(), getHeight(), background);
-		//castle.setBounds(left, top, right, bottom);
-		//castle.draw(canvas);
+		Paint textPaint = new Paint();
+		textPaint.setColor(getResources().getColor(R.color.black));
+		textPaint.setTextSize(25f);
+		canvas.drawText("Your score: " + Integer.toString(score), 10, 25, textPaint);
+		castle.setBounds(canvas.getClipBounds());
+		castle.draw(canvas);
+		// need to do this to avoid NPE before window size is captured
+		if(target != null) {
+		drawTarget(target, canvas);
+		}
 		// for now, try testing w/o drawing projectieles
 		// below here, draw all projectiles
 		for(int i = 0; i<projectileArray.length;i++) {
@@ -206,6 +247,14 @@ public class GameView extends View {
 		canvas.drawPath(shieldCircle, shield_paint);
 	}
 	
+	public void drawTarget(Projectile target, Canvas canvas) {
+		Path myTarget = new Path();
+		Paint targetPaint = new Paint();
+		targetPaint.setColor(getResources().getColor(R.color.blue));
+		myTarget.addCircle(target.x, target.y, target.radius, Direction.CW);
+		canvas.drawPath(myTarget, targetPaint);
+	}
+	
 	/*
 	 * various logic things:
 	 * if shield contacts projectile, projectile disappears
@@ -225,21 +274,20 @@ public class GameView extends View {
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		shieldCoordinates[0] = event.getX();
-		shieldCoordinates[1] = event.getY();
+		myShield.x = event.getX();
+		myShield.y = event.getY();
 		
 		
 		switch(event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			drawShield = true; //only draw shield when finger is touching the screen
-			for(int i = 0; i<10; i++) {
-				projectileArray[i].translate();
-			}
+			
 			
 			//background = getResources().getColor(R.color.black);
 			break;
 		case MotionEvent.ACTION_UP:
 			drawShield = false;
+			
 			
 			//background = getResources().getColor(R.color.white);
 			break;
@@ -319,11 +367,11 @@ public class GameView extends View {
 	/**
 	 * the following method is for testing purposes only
 	 */
-	private Projectile[] firstEntry() {
+	/*private Projectile[] firstEntry() {
 		Projectile[] oneEntry = new Projectile[10];
 		return updateProjectileArray(oneEntry, 10);
 		
 	}
-	
+	*/
 	
 }
